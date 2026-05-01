@@ -13,28 +13,30 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f5f9fb;--bg2:#eaf2f7;--bg3:#ddeaf0;
-  --text:#1d3a4a;--text2:#5a7f94;--text3:#8eb0c0;
-  --border:rgba(91,154,181,0.18);--border2:rgba(91,154,181,0.32);
-  --success:#1a7a5e;--danger:#b33a3a;--warn:#8a5a0a;
+  --bg:#fafafa;--bg2:#f2f2f4;--bg3:#e8e8ec;
+  --text:#1a1a2e;--text2:#5a5a72;--text3:#a0a0b8;
+  --border:rgba(150,0,24,0.12);--border2:rgba(150,0,24,0.25);
+  --success:#3a4a9a;--danger:#960018;--warn:#7a3a00;
   --radius:10px;--radius-lg:14px;
-  --accent:#3d8fa8;
+  --accent:#960018;--accent2:#ff0000;
 }
 @media(prefers-color-scheme:dark){
   :root{
-    --bg:#0d1e26;--bg2:#152833;--bg3:#1c3340;
-    --text:#d4eaf4;--text2:#7aabbf;--text3:#4a7a8c;
+    --bg:#12121a;--bg2:#1c1c28;--bg3:#242434;
+    --text:#e8e8f0;--text2:#9090a8;--text3:#505068;
+    --border:rgba(255,0,0,0.15);--border2:rgba(255,0,0,0.28);
+    --accent:#ff0000;--accent2:#960018;
     --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22);
-    --success:#5dcaa5;--danger:#f09595;--warn:#fac775;
+    --success:#6a7acc;--danger:#f09595;--warn:#fac775;
   }
 }
 body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;background:var(--bg3);color:var(--text);min-height:100vh;padding-bottom:80px}
 .topbar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:12px 16px 0;position:sticky;top:0;z-index:100}
-.topbar-title{font-size:17px;font-weight:600;text-align:center;margin-bottom:10px}
+.topbar-title{font-size:17px;font-weight:600;text-align:center;margin-bottom:10px;letter-spacing:1px}
 .tabs{display:flex;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{padding:8px 12px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--text2);border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.15s;flex-shrink:0}
-.tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
 .content{padding:12px 16px;max-width:480px;margin:0 auto}
 .panel{display:none}.panel.active{display:block}
 .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:12px}
