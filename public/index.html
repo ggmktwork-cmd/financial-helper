@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="財務">
+<title>財務小幫手</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f4;--bg3:#ece9e3;
+  --text:#1a1a1a;--text2:#6b6b6b;--text3:#a0a0a0;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --success:#0f6e56;--danger:#a32d2d;--warn:#854f0b;
+  --radius:10px;--radius-lg:14px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+    --text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+    --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22);
+    --success:#5dcaa5;--danger:#f09595;--warn:#fac775;
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;background:var(--bg3);color:var(--text);min-height:100vh;padding-bottom:80px}
+.topbar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:12px 16px 0;position:sticky;top:0;z-index:100}
+.topbar-title{font-size:17px;font-weight:600;text-align:center;margin-bottom:10px}
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 12px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--text2);border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.15s;flex-shrink:0}
+.tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500}
+.content{padding:12px 16px;max-width:480px;margin:0 auto}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:12px}
+.section-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;letter-spacing:0.6px;text-transform:uppercase}
+.account-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.account-item{background:var(--bg2);border-radius:var(--radius);padding:10px 12px}
+.account-name{font-size:12px;color:var(--text2);margin-bottom:3px}
+.account-balance{font-size:16px;font-weight:600;color:var(--text)}
+.account-balance.negative{color:var(--danger)}
+.account-balance.positive{color:var(--success)}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg2);border-radius:var(--radius);margin-bottom:8px;font-size:15px;font-weight:600}
+.month-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.month-row select{flex:1;font-size:14px}
+.budget-item{margin-bottom:12px}
+.budget-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.budget-item-name{font-size:14px;font-weight:500}
+.budget-item-nums{font-size:12px;color:var(--text2)}
+.progress-bar{height:7px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width 0.5s ease}
+.divider{height:0.5px;background:var(--border);margin:12px 0}
+.highlight-box{background:var(--bg2);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px}
+.highlight-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:4px 0}
+.highlight-row.big{font-size:16px;font-weight:600;padding-top:10px;margin-top:6px;border-top:0.5px solid var(--border)}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:14px;border-bottom:0.5px solid var(--border)}
+.summary-row:last-child{border-bottom:none}
+.summary-row.total{font-weight:600;border-top:0.5px solid var(--border);border-bottom:none;margin-top:4px;padding-top:10px}
+label{font-size:13px;color:var(--text2);display:block;margin-bottom:5px}
+input,select,textarea{width:100%;padding:10px 12px;font-size:15px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);-webkit-appearance:none;appearance:none;font-family:inherit}
+input:focus,select:focus{outline:none;border-color:var(--text)}
+.form-group{margin-bottom:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;font-size:15px;border:0.5px solid var(--border2);border-radius:var(--radius);cursor:pointer;background:var(--bg);color:var(--text);font-weight:500;width:100%;transition:all 0.12s;-webkit-tap-highlight-color:transparent;font-family:inherit}
+.btn:active{transform:scale(0.97);opacity:0.8}
+.btn.primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn.sm{padding:7px 14px;font-size:13px;width:auto}
+.extra{display:none}.extra.visible{display:block}
+.expense-list{display:flex;flex-direction:column;gap:6px}
+.expense-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg2);border-radius:var(--radius)}
+.expense-name{font-size:14px;font-weight:500}
+.expense-meta{font-size:12px;color:var(--text3);margin-top:2px}
+.expense-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.expense-amount{font-size:15px;font-weight:600}
+.expense-amount.income-amt{color:var(--success)}
+.expense-amount.transfer-amt{color:#185FA5}
+.expense-amount.advance-amt{color:var(--warn)}
+.badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
+.badge.三餐{background:#EAF3DE;color:#3B6D11}
+.badge.繳費{background:#FAEEDA;color:#854F0B}
+.badge.購物{background:#FBEAF0;color:#993356}
+.badge.買書{background:#E6F1FB;color:#185FA5}
+.badge.貓狗{background:#EEEDFE;color:#534AB7}
+.badge.雜支{background:#F1EFE8;color:#5F5E5A}
+.badge.代墊{background:#FAECE7;color:#993C1D}
+.badge.手續費{background:#D3D1C7;color:#444441}
+.badge.收入{background:#9FE1CB;color:#085041}
+.badge.提款{background:#B5D4F4;color:#0C447C}
+.badge.轉帳{background:#E8E0F5;color:#4A2D8A}
+.credit-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid var(--border)}
+.credit-row:last-of-type{border-bottom:none}
+.credit-bank{font-size:15px;font-weight:500}
+.credit-meta{font-size:12px;color:var(--text3);margin-top:2px}
+.paid-check{width:20px;height:20px;cursor:pointer;accent-color:var(--text);flex-shrink:0}
+.advance-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg2);border-radius:var(--radius);margin-bottom:6px}
+.advance-person{font-size:14px;font-weight:500}
+.advance-meta{font-size:12px;color:var(--text3);margin-top:2px}
+.tag-returned{font-size:11px;padding:2px 8px;border-radius:20px;background:#EAF3DE;color:#3B6D11;font-weight:500}
+.empty-state{text-align:center;padding:2rem 1rem;color:var(--text3);font-size:14px}
+.spinner{width:16px;height:16px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-wrap{text-align:center;padding:2rem;color:var(--text2);font-size:14px}
+.toast{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:rgba(30,30,30,0.92);color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:var(--bg);border-radius:20px 20px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-handle{width:36px;height:4px;background:var(--bg3);border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:17px;font-weight:600;margin-bottom:16px}
+.hint{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5}
+.cc-deadline{font-size:12px;color:var(--text2);margin-top:4px;padding:6px 10px;background:var(--bg2);border-radius:var(--radius)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">財務小幫手</div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('accounts')">帳戶總覽</button>
+    <button class="tab" onclick="switchTab('budget')">預算</button>
+    <button class="tab" onclick="switchTab('add')">新增</button>
+    <button class="tab" onclick="switchTab('advance')">代墊</button>
+    <button class="tab" onclick="switchTab('credit')">信用卡</button>
+    <button class="tab" onclick="switchTab('history')">紀錄</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- 帳戶總覽 -->
+  <div id="panel-accounts" class="panel active">
+    <div id="accounts-loading" class="loading-wrap"><span class="spinner"></span> 載入中...</div>
+    <div id="accounts-content" style="display:none">
+      <div class="card">
+        <div class="section-title">銀行帳戶</div>
+        <div class="account-grid" id="bank-accounts"></div>
+        <div class="total-row"><span>銀行合計</span><span id="bank-total">—</span></div>
+      </div>
+      <div class="card">
+        <div class="section-title">電子支付 ＆ 現金</div>
+        <div class="account-grid" id="other-accounts"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">信用卡本月已刷（預計下月帳單）</div>
+        <div id="cc-accounts"></div>
+        <div class="total-row" style="margin-top:8px"><span>信用卡負債</span><span id="cc-total" style="color:var(--danger)">—</span></div>
+      </div>
+      <div class="card">
+        <div class="total-row" style="background:var(--bg3)"><span>淨資產</span><span id="net-total">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 預算 -->
+  <div id="panel-budget" class="panel">
+    <div class="card">
+      <div class="month-row">
+        <select id="budget-month" onchange="loadBudgetData()"></select>
+        <button class="btn sm" onclick="openSetBudget()">設定預算</button>
+      </div>
+      <div id="budget-loading" class="loading-wrap" style="display:none"><span class="spinner"></span> 載入中...</div>
+      <div id="budget-content">
+        <div class="section-title">三項專屬預算</div>
+        <div class="budget-item">
+          <div class="budget-item-header"><span class="budget-item-name">📚 買書預算</span><span class="budget-item-nums" id="b-book-nums">未設定</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="b-book-bar" style="width:0%;background:#185FA5"></div></div>
+        </div>
+        <div class="budget-item">
+          <div class="budget-item-header"><span class="budget-item-name">🛍 購物預算</span><span class="budget-item-nums" id="b-shop-nums">未設定</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="b-shop-bar" style="width:0%;background:#993356"></div></div>
+        </div>
+        <div class="budget-item">
+          <div class="budget-item-header"><span class="budget-item-name">🐾 貓狗預算</span><span class="budget-item-nums" id="b-pet-nums">未設定</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="b-pet-bar" style="width:0%;background:#534AB7"></div></div>
+        </div>
+        <div class="divider"></div>
+        <div class="section-title">本月收支摘要</div>
+        <div class="highlight-box">
+          <div class="highlight-row"><span style="color:var(--text2)">收入合計</span><span id="s-income" style="color:var(--success)">—</span></div>
+          <div class="highlight-row"><span style="color:var(--text2)">繳費總計</span><span id="s-bill" style="color:var(--warn)">—</span></div>
+          <div class="highlight-row"><span style="color:var(--text2)">三項預算支出</span><span id="s-budget-spent">—</span></div>
+          <div class="highlight-row"><span style="color:var(--text2)">代墊待收回</span><span id="s-advance" style="color:var(--warn)">—</span></div>
+          <div class="highlight-row"><span style="color:var(--text2)">手續費合計</span><span id="s-fee">—</span></div>
+          <div class="highlight-row"><span style="color:var(--text2)">今日支出</span><span id="s-today">—</span></div>
+          <div class="highlight-row big"><span>估計剩餘伙食費</span><span id="s-food-remain" style="color:var(--success)">—</span></div>
+        </div>
+        <p class="hint">伙食費 = 收入 − 繳費 − 三項預算 − 手續費</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">本月分類統計</div>
+      <div id="category-breakdown"><div class="empty-state">載入中...</div></div>
+    </div>
+  </div>
+
+  <!-- 新增紀錄 -->
+  <div id="panel-add" class="panel">
+    <div class="card">
+      <div class="section-title" style="margin-bottom:14px">新增紀錄</div>
+      <div class="form-group">
+        <label>交易類型</label>
+        <select id="rec-type" onchange="toggleRecType()">
+          <option value="支出">支出</option>
+          <option value="收入">收入</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0"><label>日期</label><input type="date" id="exp-date"></div>
+        <div class="form-group" style="margin-bottom:0"><label>金額（NT$）</label><input type="number" id="exp-amount" placeholder="0" min="0" inputmode="numeric"></div>
+      </div>
+
+      <!-- 支出欄位 -->
+      <div class="extra visible" id="expense-fields">
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label>分類</label>
+            <select id="exp-cat" onchange="toggleCatFields()">
+              <option value="三餐">三餐</option>
+              <option value="繳費">繳費</option>
+              <option value="購物">購物</option>
+              <option value="買書">買書</option>
+              <option value="貓狗">貓狗</option>
+              <option value="雜支">雜支</option>
+              <option value="代墊">代墊</option>
+              <option value="手續費">手續費</option>
+              <option value="提款">提款</option>
+              <option value="轉帳">帳戶轉帳</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>付款方式</label>
+            <select id="exp-pay" onchange="togglePayFields()">
+              <option value="現金">現金</option>
+              <option value="信用卡">信用卡</option>
+              <option value="LINE Pay">LINE Pay</option>
+              <option value="LINE Money">LINE Money</option>
+              <option value="銀行轉帳">銀行轉帳</option>
+            </select>
+          </div>
+        </div>
+        <div class="extra" id="source-account-wrap">
+          <div class="form-group">
+            <label>來源帳戶</label>
+            <select id="exp-source">
+              <option value="">不指定</option>
+              <option value="國泰活期">國泰活期</option>
+              <option value="國泰網銀">國泰網銀</option>
+              <option value="中信">中信</option>
+              <option value="台企">台企</option>
+              <option value="郵局">郵局</option>
+              <option value="LINE Money">LINE Money</option>
+              <option value="現金">現金</option>
+            </select>
+          </div>
+          <div class="form-group" id="target-account-wrap" style="display:none">
+            <label>目標帳戶</label>
+            <select id="exp-target">
+              <option value="">不指定</option>
+              <option value="國泰活期">國泰活期</option>
+              <option value="國泰網銀">國泰網銀</option>
+              <option value="中信">中信</option>
+              <option value="台企">台企</option>
+              <option value="郵局">郵局</option>
+              <option value="LINE Money">LINE Money</option>
+              <option value="現金">現金</option>
+            </select>
+          </div>
+        </div>
+        <div class="extra" id="advance-fields">
+          <div class="form-group"><label>代墊對象</label><input type="text" id="exp-advance-person" placeholder="例：小明、媽媽..."></div>
+        </div>
+        <div class="extra" id="cc-fields">
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label>信用卡</label>
+              <select id="exp-bank" onchange="showCCDeadline()">
+                <option value="國泰">國泰</option>
+                <option value="富邦">富邦</option>
+                <option value="聯邦">聯邦</option>
+                <option value="凱基">凱基</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>歸屬帳單月份</label>
+              <select id="exp-bill-month"></select>
+            </div>
+          </div>
+          <div class="cc-deadline" id="cc-deadline-hint"></div>
+        </div>
+      </div>
+
+      <!-- 收入欄位 -->
+      <div class="extra" id="income-fields">
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label>收入來源</label>
+            <select id="inc-source" onchange="toggleIncSource()">
+              <option value="媽媽嘴">媽媽嘴</option>
+              <option value="誠品">誠品</option>
+              <option value="代墊還款">代墊還款</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>入帳帳戶</label>
+            <select id="inc-target">
+              <option value="國泰活期">國泰活期</option>
+              <option value="國泰網銀">國泰網銀</option>
+              <option value="中信">中信</option>
+              <option value="台企">台企</option>
+              <option value="郵局">郵局</option>
+              <option value="LINE Money">LINE Money</option>
+              <option value="現金">現金</option>
+            </select>
+          </div>
+        </div>
+        <div class="extra" id="income-advance-fields">
+          <div class="form-group"><label>還款對象</label><input type="text" id="inc-advance-person" placeholder="例：小明"></div>
+          <div class="form-group"><label>收回日期</label><input type="date" id="inc-return-date"></div>
+        </div>
+      </div>
+
+
+
+      <div class="form-group">
+        <label>備註說明</label>
+        <input type="text" id="exp-note" placeholder="例：午餐便當、薪資入帳...">
+      </div>
+      <button class="btn primary" id="add-btn" onclick="addRecord()" style="margin-bottom:8px">新增到 Notion</button>
+      <button class="btn" onclick="clearForm()">清除</button>
+    </div>
+  </div>
+
+  <!-- 代墊管理 -->
+  <div id="panel-advance" class="panel">
+    <div class="card">
+      <div class="month-row">
+        <select id="advance-month" onchange="loadAdvanceData()"></select>
+        <button class="btn sm" onclick="loadAdvanceData()">重新整理</button>
+      </div>
+      <div id="advance-loading" class="loading-wrap" style="display:none"><span class="spinner"></span> 載入中...</div>
+      <div id="advance-content"><div class="empty-state">選擇月份後載入代墊紀錄</div></div>
+    </div>
+  </div>
+
+  <!-- 信用卡帳單 -->
+  <div id="panel-credit" class="panel">
+    <div class="card">
+      <div class="month-row">
+        <select id="credit-month" onchange="loadCreditData()"></select>
+        <button class="btn sm" onclick="loadCreditData()">重新整理</button>
+      </div>
+      <button class="btn" id="recalc-btn" onclick="recalcCreditBills()" style="margin-bottom:12px">重新計算本月帳單</button>
+      <div id="credit-loading" class="loading-wrap" style="display:none"><span class="spinner"></span> 載入中...</div>
+      <div id="credit-content"><div class="empty-state">選擇月份後載入帳單</div></div>
+    </div>
+    <div class="card">
+      <div class="section-title">結帳日提醒</div>
+      <div style="font-size:13px;line-height:2;color:var(--text2)">
+        📅 國泰：每月 <strong style="color:var(--text)">23日</strong> 結帳，次月 <strong style="color:var(--text)">11日</strong> 繳款<br>
+        📅 凱基：每月 <strong style="color:var(--text)">6日</strong> 結帳，每月 <strong style="color:var(--text)">23日</strong> 繳款<br>
+        📅 富邦：每月 <strong style="color:var(--text)">20日</strong> 結帳，次月 <strong style="color:var(--text)">5日</strong> 繳款<br>
+        📅 聯邦：每月 <strong style="color:var(--text)">12日</strong> 結帳，每月 <strong style="color:var(--text)">27日</strong> 繳款
+      </div>
+    </div>
+  </div>
+
+  <!-- 支出紀錄 -->
+  <div id="panel-history" class="panel">
+    <div class="card">
+      <div class="month-row">
+        <select id="history-month" onchange="loadHistoryData()"></select>
+        <button class="btn sm" onclick="loadHistoryData()">重新整理</button>
+      </div>
+      <div id="history-loading" class="loading-wrap" style="display:none"><span class="spinner"></span> 載入中...</div>
+      <div id="history-content"><div class="empty-state">選擇月份後載入紀錄</div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 設定預算 Modal -->
+<div class="modal-overlay" id="budget-modal" onclick="handleOverlayClick(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">設定每月預算</div>
+    <div class="form-group"><label>月份</label><input type="month" id="modal-month"></div>
+    <div class="form-group"><label>📚 買書預算（NT$）</label><input type="number" id="modal-book" placeholder="0" min="0" inputmode="numeric"></div>
+    <div class="form-group"><label>🛍 購物預算（NT$）</label><input type="number" id="modal-shop" placeholder="0" min="0" inputmode="numeric"></div>
+    <div class="form-group"><label>🐾 貓狗預算（NT$）</label><input type="number" id="modal-pet" placeholder="0" min="0" inputmode="numeric"></div>
+    <button class="btn primary" id="modal-save-btn" onclick="saveBudget()" style="margin-bottom:8px">儲存到 Notion</button>
+    <button class="btn" onclick="closeBudgetModal()">取消</button>
+  </div>
+</div>
+
+<script>
+// ── API ──────────────────────────────────────────
+async function notionAPI(path, method, body) {
+  const res = await fetch("/api/notion", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path, method: method || "GET", body: body || null })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error + (data.status ? " (" + data.status + ")" : ""));
+  return data;
+}
+async function notionQuery(dbId, filter) {
+  const body = { page_size: 100 };
+  if (filter) body.filter = filter;
+  return notionAPI(`/databases/${dbId}/query`, "POST", body);
+}
+async function notionQueryAll(dbId) {
+  return notionAPI(`/databases/${dbId}/query`, "POST", { page_size: 100 });
+}
+async function notionCreate(dbId, props) {
+  return notionAPI("/pages", "POST", { parent: { database_id: dbId }, properties: props });
+}
+async function notionUpdate(pageId, props) {
+  return notionAPI(`/pages/${pageId}`, "PATCH", { properties: props });
+}
+
+// ── DB IDs ───────────────────────────────────────
+let dbIds = { expenses: null, budget: null, credit: null, accounts: null };
+async function searchDatabases() {
+  try {
+    const data = await notionAPI("/search", "POST", { filter: { value: "database", property: "object" }, page_size: 50 });
+    if (!data.results) return false;
+    console.log("Found DBs:", data.results.map(db => (db.title||[]).map(x=>x.plain_text).join("")));
+    for (const db of data.results) {
+      const t = (db.title || []).map(x => x.plain_text).join("");
+      if (/支出|expense/i.test(t)) dbIds.expenses = db.id;
+      else if (/預算|budget/i.test(t)) dbIds.budget = db.id;
+      else if (/信用卡|帳單|credit/i.test(t)) dbIds.credit = db.id;
+      else if (/帳戶|餘額|account/i.test(t)) dbIds.accounts = db.id;
+    }
+    console.log("Matched:", dbIds);
+    return !!(dbIds.expenses && dbIds.budget && dbIds.credit && dbIds.accounts);
+  } catch (e) { console.error(e); return false; }
+}
+
+// ── Helpers ──────────────────────────────────────
+function getMonthOptions(sel, count = 6) {
+  const now = new Date(); sel.innerHTML = "";
+  for (let i = 0; i < count; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const opt = document.createElement("option");
+    opt.value = val; opt.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月`;
+    sel.appendChild(opt);
+  }
+}
+function getCreditMonthOptions(sel) {
+  const now = new Date(); sel.innerHTML = "";
+  for (let i = 3; i >= -3; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const opt = document.createElement("option");
+    opt.value = val; opt.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月`;
+    if (i === 1) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+function getBillMonths(sel) {
+  const now = new Date(); sel.innerHTML = "";
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const opt = document.createElement("option");
+    opt.value = val; opt.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月帳單`;
+    if (i === 1) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+function showToast(msg, dur = 2800) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), dur);
+}
+function fmtMoney(n) { return "NT$" + (Math.round(n) || 0).toLocaleString(); }
+function getTitle(props, key) { return (props[key]?.title || []).map(x => x.plain_text).join("") || ""; }
+function getRichText(props, key) { return (props[key]?.rich_text || []).map(x => x.plain_text).join("") || ""; }
+
+// ── CC Deadline hint ──────────────────────────────
+const CC_INFO = {
+  "國泰": { cutDay: 23, payDesc: "次月11日" },
+  "富邦": { cutDay: 20, payDesc: "次月5日" },
+  "聯邦": { cutDay: 12, payDesc: "每月27日" },
+  "凱基": { cutDay: 6, payDesc: "每月23日" }
+};
+function showCCDeadline() {
+  const bank = document.getElementById("exp-bank").value;
+  const info = CC_INFO[bank];
+  const hint = document.getElementById("cc-deadline-hint");
+  if (info) hint.textContent = `結帳日：每月${info.cutDay}日　繳款截止：${info.payDesc}`;
+}
+function getDefaultBillMonth(bank) {
+  const now = new Date();
+  const info = CC_INFO[bank];
+  if (!info) return `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, '0')}`;
+  const currentDay = now.getDate();
+  const offset = currentDay > info.cutDay ? 1 : 0;
+  const d = new Date(now.getFullYear(), now.getMonth() + offset + 1, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// ── Tab switching ────────────────────────────────
+function switchTab(name) {
+  const names = ["accounts", "budget", "add", "advance", "credit", "history"];
+  document.querySelectorAll(".tab").forEach((t, i) => t.classList.toggle("active", names[i] === name));
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.getElementById("panel-" + name).classList.add("active");
+  if (name === "accounts") loadAccountsData();
+  if (name === "budget") loadBudgetData();
+  if (name === "advance") loadAdvanceData();
+  if (name === "credit") loadCreditData();
+  if (name === "history") loadHistoryData();
+}
+
+// ── Form toggles ─────────────────────────────────
+function toggleRecType() {
+  const type = document.getElementById("rec-type").value;
+  document.getElementById("expense-fields").classList.toggle("visible", type === "支出");
+  document.getElementById("income-fields").classList.toggle("visible", type === "收入");
+}
+function toggleCatFields() {
+  const cat = document.getElementById("exp-cat").value;
+  document.getElementById("advance-fields").classList.toggle("visible", cat === "代墊");
+  // Show 來源帳戶 only for 提款, 繳費, 轉帳
+  const showSource = ["提款","繳費","轉帳"].includes(cat);
+  document.getElementById("source-account-wrap").classList.toggle("visible", showSource);
+  // Show 目標帳戶 only for 轉帳 within expense
+  document.getElementById("target-account-wrap").style.display = cat === "轉帳" ? "block" : "none";
+}
+function togglePayFields() {
+  const pay = document.getElementById("exp-pay").value;
+  const isCC = pay === "信用卡" || pay === "LINE Pay";
+  document.getElementById("cc-fields").classList.toggle("visible", isCC);
+  if (pay === "LINE Pay") {
+    document.getElementById("exp-bank").value = "富邦";
+    document.getElementById("exp-source").value = "";
+  }
+  if (isCC) {
+    const bank = document.getElementById("exp-bank").value;
+    const billMonth = getDefaultBillMonth(bank);
+    const sel = document.getElementById("exp-bill-month");
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === billMonth) { sel.selectedIndex = i; break; }
+    }
+    showCCDeadline();
+  }
+}
+function toggleIncSource() {
+  const src = document.getElementById("inc-source").value;
+  document.getElementById("income-advance-fields").classList.toggle("visible", src === "代墊還款");
+}
+
+// ── Accounts ─────────────────────────────────────
+async function loadAccountsData() {
+  if (!dbIds.accounts) { const ok = await searchDatabases(); if (!ok) { showToast("⚠️ 找不到資料庫"); return; } }
+  document.getElementById("accounts-loading").style.display = "block";
+  document.getElementById("accounts-content").style.display = "none";
+  try {
+    const res = await notionQueryAll(dbIds.accounts);
+    const accounts = res.results || [];
+    let bankHTML = "", otherHTML = "", ccHTML = "";
+    let bankTotal = 0, ccTotal = 0;
+
+    // Get current month CC spending
+    const now = new Date();
+    const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const nextMonth = `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, '0')}`;
+    const expRes = await notionQueryAll(dbIds.expenses);
+    const ccSpend = {};
+    for (const e of expRes.results || []) {
+      const pay = e.properties["付款方式"]?.select?.name || "";
+      const bank = e.properties["信用卡"]?.select?.name || "";
+      const amt = e.properties["金額"]?.number || 0;
+      const billMonth = e.properties["帳單月份"]?.select?.name || "";
+      if ((pay === "信用卡" || pay === "LINE Pay") && bank && billMonth === nextMonth) {
+        ccSpend[bank] = (ccSpend[bank] || 0) + amt;
+      }
+    }
+
+    for (const a of accounts) {
+      const name = getTitle(a.properties, "帳戶名稱");
+      const balance = a.properties["餘額"]?.number || 0;
+      const type = a.properties["帳戶類型"]?.select?.name || "";
+      if (type === "銀行") {
+        bankTotal += balance;
+        bankHTML += `<div class="account-item"><div class="account-name">${name}</div><div class="account-balance ${balance < 0 ? 'negative' : ''}">${fmtMoney(balance)}</div></div>`;
+      } else if (type === "電子支付" || type === "現金") {
+        otherHTML += `<div class="account-item"><div class="account-name">${name}</div><div class="account-balance ${balance < 0 ? 'negative' : ''}">${fmtMoney(balance)}</div></div>`;
+      } else if (type === "信用卡") {
+        const spent = ccSpend[name.replace("卡", "")] || 0;
+        ccTotal += spent;
+        ccHTML += `<div class="summary-row"><span>${name}</span><span style="font-weight:600;color:${spent > 0 ? 'var(--danger)' : 'var(--text3)'}">${spent > 0 ? '-' : ''}${fmtMoney(spent)}</span></div>`;
+      }
+    }
+
+    document.getElementById("bank-accounts").innerHTML = bankHTML || '<div class="empty-state">無資料</div>';
+    document.getElementById("other-accounts").innerHTML = otherHTML || '<div class="empty-state">無資料</div>';
+    document.getElementById("cc-accounts").innerHTML = ccHTML || '<div class="empty-state">本月尚無刷卡紀錄</div>';
+    document.getElementById("bank-total").textContent = fmtMoney(bankTotal);
+    document.getElementById("cc-total").textContent = "-" + fmtMoney(ccTotal);
+
+    const allBalances = accounts.filter(a => a.properties["帳戶類型"]?.select?.name !== "信用卡")
+      .reduce((sum, a) => sum + (a.properties["餘額"]?.number || 0), 0);
+    const net = allBalances - ccTotal;
+    const netEl = document.getElementById("net-total");
+    netEl.textContent = fmtMoney(net);
+    netEl.style.color = net < 0 ? "var(--danger)" : "var(--success)";
+
+  } catch (e) { showToast("載入失敗：" + e.message); console.error(e); }
+  finally { document.getElementById("accounts-loading").style.display = "none"; document.getElementById("accounts-content").style.display = "block"; }
+}
+
+// ── Account balance update ────────────────────────
+async function updateAccountBalance(accountName, delta) {
+  if (!accountName || delta === 0) return;
+  try {
+    const res = await notionQueryAll(dbIds.accounts);
+    for (const a of res.results || []) {
+      const name = getTitle(a.properties, "帳戶名稱");
+      if (name === accountName) {
+        const cur = a.properties["餘額"]?.number || 0;
+        await notionUpdate(a.id, { "餘額": { number: cur + delta } });
+        return;
+      }
+    }
+  } catch (e) { console.log("balance update err", e); }
+}
+
+// ── Budget ───────────────────────────────────────
+async function loadBudgetData() {
+  if (!dbIds.expenses || !dbIds.budget) { const ok = await searchDatabases(); if (!ok) { showToast("⚠️ 找不到資料庫"); return; } }
+  const month = document.getElementById("budget-month").value;
+  document.getElementById("budget-loading").style.display = "block";
+  document.getElementById("budget-content").style.display = "none";
+  try {
+    const [ey, em] = month.split("-");
+    const start = `${ey}-${em}-01`;
+    const end = `${ey}-${em}-${String(new Date(+ey, +em, 0).getDate()).padStart(2, '0')}`;
+    const today = new Date().toISOString().split("T")[0];
+    const [expRes, budRes] = await Promise.all([
+      notionQuery(dbIds.expenses, { and: [{ property: "交易日期", date: { on_or_after: start } }, { property: "交易日期", date: { on_or_before: end } }] }),
+      notionQueryAll(dbIds.budget)
+    ]);
+    const cats = { 三餐: 0, 繳費: 0, 購物: 0, 買書: 0, 貓狗: 0, 雜支: 0, 代墊: 0, 手續費: 0, 提款: 0, 收入: 0, 轉帳: 0 };
+    let todayTotal = 0, advancePending = 0;
+    for (const e of expRes.results || []) {
+      const amt = e.properties["金額"]?.number || 0;
+      const cat = e.properties["分類"]?.select?.name || e.properties["交易類型"]?.select?.name || "雜支";
+      const date = e.properties["交易日期"]?.date?.start || "";
+      const returned = e.properties["已收回"]?.checkbox || false;
+      if (cats[cat] !== undefined) cats[cat] += amt;
+      if (date === today && cat !== "收入" && cat !== "轉帳") todayTotal += amt;
+      if (cat === "代墊" && !returned) advancePending += amt;
+    }
+    const monthTitle = `${ey}-${em}`;
+    let bookB = 0, shopB = 0, petB = 0;
+    for (const b of budRes.results || []) {
+      if (getTitle(b.properties, "月份") === monthTitle) {
+        bookB = b.properties["買書預算"]?.number || 0;
+        shopB = b.properties["購物預算"]?.number || 0;
+        petB = b.properties["貓狗預算"]?.number || 0;
+        break;
+      }
+    }
+    function renderBar(budget, spent, numsId, barId, color) {
+      const el = document.getElementById(numsId); const bar = document.getElementById(barId);
+      if (budget === 0) { el.textContent = "未設定"; bar.style.width = "0%"; return; }
+      const pct = Math.min(100, Math.round(spent / budget * 100));
+      el.textContent = `${fmtMoney(spent)} / ${fmtMoney(budget)}`;
+      bar.style.width = pct + "%";
+      bar.style.background = pct >= 90 ? "#E24B4A" : pct >= 70 ? "#EF9F27" : color;
+    }
+    renderBar(bookB, cats["買書"], "b-book-nums", "b-book-bar", "#185FA5");
+    renderBar(shopB, cats["購物"], "b-shop-nums", "b-shop-bar", "#993356");
+    renderBar(petB, cats["貓狗"], "b-pet-nums", "b-pet-bar", "#534AB7");
+    const totalB = bookB + shopB + petB;
+    const budgetSpent = cats["買書"] + cats["購物"] + cats["貓狗"];
+    const foodRemain = totalB > 0 ? (cats["收入"] - cats["繳費"] - totalB - cats["手續費"]) : null;
+    document.getElementById("s-income").textContent = fmtMoney(cats["收入"]);
+    document.getElementById("s-bill").textContent = fmtMoney(cats["繳費"]);
+    document.getElementById("s-budget-spent").textContent = fmtMoney(budgetSpent);
+    document.getElementById("s-advance").textContent = fmtMoney(advancePending);
+    document.getElementById("s-fee").textContent = fmtMoney(cats["手續費"]);
+    document.getElementById("s-today").textContent = fmtMoney(todayTotal);
+    const foodEl = document.getElementById("s-food-remain");
+    if (foodRemain === null) { foodEl.textContent = "請先設定預算"; }
+    else { foodEl.textContent = fmtMoney(foodRemain); foodEl.style.color = foodRemain < 0 ? "var(--danger)" : "var(--success)"; }
+    const bd = document.getElementById("category-breakdown");
+    const spendCats = Object.entries(cats).filter(([k, v]) => v > 0 && k !== "收入" && k !== "轉帳");
+    const totalSpend = spendCats.reduce((a, [, v]) => a + v, 0);
+    let html = "";
+    if (cats["收入"] > 0) html += `<div class="summary-row"><span><span class="badge 收入">收入</span></span><span></span><span style="font-weight:600;color:var(--success)">${fmtMoney(cats["收入"])}</span></div>`;
+    html += spendCats.map(([cat, amt]) => {
+      const pct = totalSpend > 0 ? Math.round(amt / totalSpend * 100) : 0;
+      return `<div class="summary-row"><span><span class="badge ${cat}">${cat}</span></span><span style="font-size:12px;color:var(--text2)">${pct}%</span><span style="font-weight:600">${fmtMoney(amt)}</span></div>`;
+    }).join("");
+    html += `<div class="summary-row total"><span>支出合計</span><span>${fmtMoney(totalSpend)}</span></div>`;
+    bd.innerHTML = html || `<div class="empty-state">本月尚無紀錄</div>`;
+  } catch (e) { showToast("載入失敗：" + e.message); console.error(e); }
+  finally { document.getElementById("budget-loading").style.display = "none"; document.getElementById("budget-content").style.display = "block"; }
+}
+
+// ── Add record ───────────────────────────────────
+async function addRecord() {
+  if (!dbIds.expenses) { const ok = await searchDatabases(); if (!ok) { showToast("⚠️ 找不到資料庫"); return; } }
+  const type = document.getElementById("rec-type").value;
+  const date = document.getElementById("exp-date").value;
+  const amount = parseFloat(document.getElementById("exp-amount").value);
+  const note = document.getElementById("exp-note").value.trim();
+  if (!date) { showToast("請選擇日期"); return; }
+  if (!amount || amount <= 0) { showToast("請輸入有效金額"); return; }
+  const btn = document.getElementById("add-btn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 新增中...';
+  try {
+    let props = { "金額": { number: amount }, "交易日期": { date: { start: date } }, "交易類型": { select: { name: type } } };
+    let sourceAcc = "", targetAcc = "";
+
+    if (type === "支出") {
+      const cat = document.getElementById("exp-cat").value;
+      const pay = document.getElementById("exp-pay").value;
+      const source = document.getElementById("exp-source").value;
+      const person = document.getElementById("exp-advance-person").value.trim();
+      const bank = document.getElementById("exp-bank").value;
+      const billMonth = document.getElementById("exp-bill-month").value;
+      props["名稱"] = { title: [{ text: { content: note || cat } }] };
+      props["分類"] = { select: { name: cat } };
+      props["付款方式"] = { select: { name: pay } };
+      if (source) { props["來源帳戶"] = { select: { name: source } }; }
+      const expTarget = document.getElementById("exp-target").value;
+      if (expTarget) props["目標帳戶"] = { select: { name: expTarget } };
+      if (cat === "代墊" && person) props["代墊對象"] = { rich_text: [{ text: { content: person } }] };
+      if (pay === "信用卡" || pay === "LINE Pay") {
+        props["信用卡"] = { select: { name: bank } };
+        props["帳單月份"] = { select: { name: billMonth } };
+      }
+      sourceAcc = source;
+    } else if (type === "收入") {
+      const src = document.getElementById("inc-source").value;
+      const target = document.getElementById("inc-target").value;
+      const person = document.getElementById("inc-advance-person").value.trim();
+      const returnDate = document.getElementById("inc-return-date").value;
+      props["名稱"] = { title: [{ text: { content: note || `收入－${src}` } }] };
+      props["分類"] = { select: { name: "收入" } };
+      props["付款方式"] = { select: { name: "銀行轉帳" } };
+      props["目標帳戶"] = { select: { name: target } };
+      props["代墊對象"] = { rich_text: [{ text: { content: src === "代墊還款" ? (person || src) : src } }] };
+      if (src === "代墊還款" && returnDate) props["收回日期"] = { date: { start: returnDate } };
+      targetAcc = target;
+    }
+
+    const res = await notionCreate(dbIds.expenses, props);
+    if (res.id) {
+      showToast("✓ 已新增到 Notion");
+      // Update account balances
+      if (type === "支出" && sourceAcc) {
+        await updateAccountBalance(sourceAcc, -amount);
+        // If expense is a transfer between accounts
+        const expCat = document.getElementById("exp-cat").value;
+        const expTargetVal = document.getElementById("exp-target").value;
+        if (expCat === "帳戶轉帳" && expTargetVal) await updateAccountBalance(expTargetVal, amount);
+        // If expense is 提款 (cash out), add to 現金
+        if (expCat === "提款") await updateAccountBalance("現金", amount);
+      }
+      if (type === "收入" && targetAcc) await updateAccountBalance(targetAcc, amount);
+      if (type === "轉帳") {
+        await updateAccountBalance(sourceAcc, -amount);
+        await updateAccountBalance(targetAcc, amount);
+      }
+      // Update credit bill
+      const pay = type === "支出" ? document.getElementById("exp-pay").value : "";
+      if (pay === "信用卡" || pay === "LINE Pay") {
+        await updateCreditBill(document.getElementById("exp-bank").value, document.getElementById("exp-bill-month").value, amount);
+      }
+      clearForm();
+    } else { showToast("新增失敗，請確認欄位名稱"); }
+  } catch (e) { showToast("錯誤：" + e.message); console.error(e); }
+  finally { btn.disabled = false; btn.textContent = "新增到 Notion"; }
+}
+
+// ── Credit bill helpers ───────────────────────────
+async function updateCreditBill(bank, billMonth, amount) {
+  if (!dbIds.credit) return;
+  try {
+    const all = await notionQueryAll(dbIds.credit);
+    const existing = (all.results || []).find(r =>
+      getTitle(r.properties, "銀行名稱") === bank &&
+      r.properties["帳單月份"]?.select?.name === billMonth
+    );
+    if (existing) {
+      const cur = existing.properties["應繳金額"]?.number || 0;
+      await notionUpdate(existing.id, { "應繳金額": { number: cur + amount } });
+    } else {
+      await notionCreate(dbIds.credit, {
+        "銀行名稱": { title: [{ text: { content: bank } }] },
+        "帳單月份": { select: { name: billMonth } },
+        "應繳金額": { number: amount },
+        "已繳": { checkbox: false }
+      });
+    }
+  } catch (e) { console.log(e); }
+}
+
+async function recalcCreditBills() {
+  if (!dbIds.expenses || !dbIds.credit) { const ok = await searchDatabases(); if (!ok) { showToast("⚠️ 找不到資料庫"); return; } }
+  const month = document.getElementById("credit-month").value;
+  const btn = document.getElementById("recalc-btn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 計算中...';
+  try {
+    const expRes = await notionQueryAll(dbIds.expenses);
+    const bankTotals = {};
+    for (const e of expRes.results || []) {
+      const pay = e.properties["付款方式"]?.select?.name || "";
+      const bank = e.properties["信用卡"]?.select?.name || "";
+      const amt = e.properties["金額"]?.number || 0;
+      const billMonth = e.properties["帳單月份"]?.select?.name || "";
+      if ((pay === "信用卡" || pay === "LINE Pay") && bank && billMonth === month) {
+        bankTotals[bank] = (bankTotals[bank] || 0) + amt;
+      }
+    }
+    if (Object.keys(bankTotals).length === 0) { showToast("本月無信用卡支出紀錄"); return; }
+    const creditRes = await notionQueryAll(dbIds.credit);
+    const existingMap = {};
+    for (const r of creditRes.results || []) {
+      const bank = getTitle(r.properties, "銀行名稱");
+      const bm = r.properties["帳單月份"]?.select?.name || "";
+      if (bm === month) existingMap[bank] = r.id;
+    }
+    for (const [bank, total] of Object.entries(bankTotals)) {
+      if (existingMap[bank]) {
+        await notionUpdate(existingMap[bank], { "應繳金額": { number: total } });
+      } else {
+        await notionCreate(dbIds.credit, {
+          "銀行名稱": { title: [{ text: { content: bank } }] },
+          "帳單月份": { select: { name: month } },
+          "應繳金額": { number: total },
+          "已繳": { checkbox: false }
+        });
+      }
+    }
+    showToast(`✓ 已重新計算 ${Object.keys(bankTotals).length} 家銀行帳單`);
+    loadCreditData();
+  } catch (e) { showToast("計算失敗：" + e.message); console.error(e); }
+  finally { btn.disabled = false; btn.textContent = "重新計算本月帳單"; }
+}
+
+// ── Load panels ──────────────────────────────────
+async function loadAdvanceData() {
+  if (!dbIds.expenses) { const ok = await searchDatabases(); if (!ok) { showToast("⚠️ 找不到資料庫"); return; } }
+  const month = document.getElementById("advance-month").value;
+  const [ey, em] = month.split("-");
+  const start = `${ey}-${em}-01`;
+  const end = `${ey}-${em}-${String(new Date(+ey, +em, 0).getDate()).padStart(2, '0')}`;
+  document.getElementById("advance-loading").style.display = "block";
+  document.getElementById("advance-content").innerHTML = "";
+  try {
+    const res = await notionQuery(dbIds.expenses, { and: [
+      { property: "分類", select: { equals: "代墊" } },
+      { property: "交易日期", date: { on_or_after: start } },
+      { property: "交易日期", date: { on_or_before: end } }
+    ]});
+    const rows = res.results || [];
+    if (rows.length === 0) {
+      document.getElementById("advance-content").innerHTML = `<div class="empty-state">本月尚無代墊紀錄</div>`;
+    } else {
+      let pending = 0, total = 0;
+      const html = rows.map(r => {
+        const name = getTitle(r.properties, "名稱");
+        const amt = r.properties["金額"]?.number || 0;
+        const person = getRichText(r.properties, "代墊對象") || "未填寫";
+        const date = r.properties["交易日期"]?.date?.start || "";
+        const returned = r.properties["已收回"]?.checkbox || false;
+        const returnDate = r.properties["收回日期"]?.date?.start || "";
+        total += amt; if (!returned) pending += amt;
+        return `<div class="advance-row">
+          <div><div class="advance-person">${person}</div><div class="advance-meta">${date}${name ? " · " + name : ""}${returnDate ? " · 收回：" + returnDate : ""}</div></div>
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+            <span style="font-size:15px;font-weight:600;color:${returned ? 'var(--text3)' : 'var(--warn)'};${returned ? 'text-decoration:line-through' : ''}">${fmtMoney(amt)}</span>
+            ${returned ? '<span class="tag-returned">已收回</span>' : `<input type="checkbox" class="paid-check" onchange="markReturned('${r.id}',this.checked)">`}
+          </div>
+        </div>`;
+      }).join("");
+      document.getElementById("advance-content").innerHTML = html +
+        `<div class="divider"></div>
+        <div class="summary-row"><span style="color:var(--text2)">代墊總額</span><span style="font-weight:600">${fmtMoney(total)}</span></div>
+        <div class="summary-row total"><span>待收回</span><span style="color:var(--warn)">${fmtMoney(pending)}</span></div>`;
+    }
+  } catch (e) { showToast("載入失敗：" + e.message); }
+  finally { document.getElementById("advance-loading").style.display = "none"; }
+}
+
+async function markReturned(pageId, checked) {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const props = { "已收回": { checkbox: checked } };
+    if (checked) props["收回日期"] = { date: { start: today } };
+    await notionUpdate(pageId, props);
+    showToast(checked ? "已標記收回" : "已取消標記");
+    setTimeout(() => loadAdvanceData(), 600);
+  } catch (e) { showToast("更新失敗"); }
+}
+
+async function loadCreditData() {
+  if (!dbIds.credit) { const ok = await searchDatabases(); if (!ok) { showToast("⚠️ 找不到資料庫"); return; } }
+  const month = document.getElementById("credit-month").value;
+  document.getElementById("credit-loading").style.display = "block";
+  document.getElementById("credit-content").innerHTML = "";
+  try {
+    const allCredit = await notionQueryAll(dbIds.credit);
+    const rows = (allCredit.results || []).filter(r => r.properties["帳單月份"]?.select?.name === month);
+    if (rows.length === 0) {
+      document.getElementById("credit-content").innerHTML = `<div class="empty-state">本月尚無信用卡帳單紀錄</div>`;
+    } else {
+      let totalCC = 0;
+      const html = rows.map(r => {
+        const bank = getTitle(r.properties, "銀行名稱");
+        const amt = r.properties["應繳金額"]?.number || 0;
+        const paid = r.properties["已繳"]?.checkbox || false;
+        if (!paid) totalCC += amt;
+        return `<div class="credit-row">
+          <div><div class="credit-bank">${bank}</div><div class="credit-meta">${month} 帳單${paid ? ' · <span style="color:var(--success)">已繳清</span>' : ''}</div></div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-size:15px;font-weight:600;${paid ? 'text-decoration:line-through;color:var(--text3)' : ''}">${fmtMoney(amt)}</div>
+            <input type="checkbox" class="paid-check" ${paid ? "checked" : ""} onchange="togglePaid('${r.id}',this.checked)">
+          </div>
+        </div>`;
+      }).join("");
+      document.getElementById("credit-content").innerHTML = html + `<div class="summary-row total"><span>待繳合計</span><span style="color:var(--danger)">${fmtMoney(totalCC)}</span></div>`;
+    }
+  } catch (e) { showToast("載入失敗：" + e.message); console.error(e); }
+  finally { document.getElementById("credit-loading").style.display = "none"; }
+}
+
+async function togglePaid(pageId, checked) {
+  try {
+    await notionUpdate(pageId, { "已繳": { checkbox: checked } });
+    showToast(checked ? "已標記繳清" : "已取消繳清");
+    setTimeout(() => loadCreditData(), 600);
+  } catch (e) { showToast("更新失敗"); }
+}
+
+async function loadHistoryData() {
+  if (!dbIds.expenses) { const ok = await searchDatabases(); if (!ok) { showToast("⚠️ 找不到資料庫"); return; } }
+  const month = document.getElementById("history-month").value;
+  const [ey, em] = month.split("-");
+  const start = `${ey}-${em}-01`;
+  const end = `${ey}-${em}-${String(new Date(+ey, +em, 0).getDate()).padStart(2, '0')}`;
+  document.getElementById("history-loading").style.display = "block";
+  document.getElementById("history-content").innerHTML = "";
+  try {
+    const res = await notionQuery(dbIds.expenses, { and: [{ property: "交易日期", date: { on_or_after: start } }, { property: "交易日期", date: { on_or_before: end } }] });
+    const rows = (res.results || []).sort((a, b) => (b.properties["交易日期"]?.date?.start || "").localeCompare(a.properties["交易日期"]?.date?.start || ""));
+    if (rows.length === 0) {
+      document.getElementById("history-content").innerHTML = `<div class="empty-state">本月尚無紀錄</div>`;
+    } else {
+      const html = `<div class="expense-list">${rows.map(r => {
+        const name = getTitle(r.properties, "名稱");
+        const amt = r.properties["金額"]?.number || 0;
+        const cat = r.properties["分類"]?.select?.name || "";
+        const txType = r.properties["交易類型"]?.select?.name || "";
+        const pay = r.properties["付款方式"]?.select?.name || "";
+        const date = r.properties["交易日期"]?.date?.start || "";
+        const bank = r.properties["信用卡"]?.select?.name || "";
+        const source = r.properties["來源帳戶"]?.select?.name || "";
+        const target = r.properties["目標帳戶"]?.select?.name || "";
+        const person = getRichText(r.properties, "代墊對象") || "";
+        const returned = r.properties["已收回"]?.checkbox || false;
+        const isIncome = cat === "收入" || txType === "收入";
+        const isTransfer = txType === "轉帳";
+        const isAdvance = cat === "代墊";
+        const displayCat = isTransfer ? "轉帳" : cat;
+        const meta = [date, pay, bank, source && !isTransfer ? source : "", isTransfer ? `${source}→${target}` : "", person ? (isIncome ? `來源：${person}` : `代墊：${person}`) : ""].filter(Boolean).join(" · ");
+        return `<div class="expense-item">
+          <div style="flex:1;min-width:0">
+            <div class="expense-name">${name}${isAdvance && returned ? ' <span style="font-size:11px;color:var(--success)">已收回</span>' : ''}</div>
+            <div class="expense-meta">${meta}</div>
+          </div>
+          <div class="expense-right">
+            <span class="badge ${displayCat}">${displayCat}</span>
+            <span class="expense-amount${isIncome ? ' income-amt' : isTransfer ? ' transfer-amt' : isAdvance ? ' advance-amt' : ''}">${isIncome ? '+' : ''}${fmtMoney(amt)}</span>
+          </div>
+        </div>`;
+      }).join("")}</div>`;
+      document.getElementById("history-content").innerHTML = html;
+    }
+  } catch (e) { showToast("載入失敗：" + e.message); }
+  finally { document.getElementById("history-loading").style.display = "none"; }
+}
+
+// ── Budget modal ─────────────────────────────────
+function openSetBudget() {
+  document.getElementById("budget-modal").classList.add("open");
+  document.getElementById("modal-month").value = document.getElementById("budget-month").value;
+  ["modal-book", "modal-shop", "modal-pet"].forEach(id => document.getElementById(id).value = "");
+}
+function closeBudgetModal() { document.getElementById("budget-modal").classList.remove("open"); }
+function handleOverlayClick(e) { if (e.target === document.getElementById("budget-modal")) closeBudgetModal(); }
+async function saveBudget() {
+  if (!dbIds.budget) { const ok = await searchDatabases(); if (!ok) { showToast("⚠️ 找不到資料庫"); return; } }
+  const month = document.getElementById("modal-month").value;
+  const book = parseFloat(document.getElementById("modal-book").value) || 0;
+  const shop = parseFloat(document.getElementById("modal-shop").value) || 0;
+  const pet = parseFloat(document.getElementById("modal-pet").value) || 0;
+  if (!month) { showToast("請選擇月份"); return; }
+  if (book === 0 && shop === 0 && pet === 0) { showToast("請至少填寫一項預算"); return; }
+  const btn = document.getElementById("modal-save-btn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    const [ey, em] = month.split("-");
+    const monthTitle = `${ey}-${em}`;
+    const res = await notionQueryAll(dbIds.budget);
+    let existing = null;
+    for (const b of res.results || []) { if (getTitle(b.properties, "月份") === monthTitle) { existing = b; break; } }
+    const updateProps = { "買書預算": { number: book }, "購物預算": { number: shop }, "貓狗預算": { number: pet } };
+    const createProps = { "月份": { title: [{ text: { content: monthTitle } }] }, ...updateProps };
+    if (existing) await notionUpdate(existing.id, updateProps);
+    else await notionCreate(dbIds.budget, createProps);
+    showToast(`✓ ${monthTitle} 預算已儲存`);
+    closeBudgetModal(); loadBudgetData();
+  } catch (e) { showToast("儲存失敗：" + e.message); }
+  finally { btn.disabled = false; btn.textContent = "儲存到 Notion"; }
+}
+
+// ── Clear form ───────────────────────────────────
+function clearForm() {
+  document.getElementById("exp-amount").value = "";
+  document.getElementById("exp-note").value = "";
+  document.getElementById("exp-cat").value = "三餐";
+  document.getElementById("exp-pay").value = "現金";
+  document.getElementById("exp-advance-person").value = "";
+  document.getElementById("inc-advance-person").value = "";
+  document.getElementById("inc-return-date").value = "";
+  document.getElementById("rec-type").value = "支出";
+  document.getElementById("exp-cat").value = "三餐";
+  toggleRecType(); toggleCatFields(); togglePayFields();
+}
+
+// ── Init ─────────────────────────────────────────
+async function init() {
+  ["budget-month", "advance-month", "history-month"].forEach(id => getMonthOptions(document.getElementById(id)));
+  getCreditMonthOptions(document.getElementById("credit-month"));
+  getBillMonths(document.getElementById("exp-bill-month"));
+  document.getElementById("exp-date").value = new Date().toISOString().split("T")[0];
+  document.getElementById("inc-source").addEventListener("change", toggleIncSource);
+  toggleRecType(); toggleCatFields(); togglePayFields();
+  const ok = await searchDatabases();
+  if (!ok) { showToast("⚠️ 請確認四個資料庫皆已連接 Integration", 4000); return; }
+  loadAccountsData();
+}
+init();
+</script>
+</body>
+</html>
