@@ -532,8 +532,9 @@ function toggleRecType() {
 function toggleCatFields() {
   const cat = document.getElementById("exp-cat").value;
   document.getElementById("advance-fields").classList.toggle("visible", cat === "代墊");
-  // Show 來源帳戶 only for 提款, 繳費, 轉帳
-  const showSource = ["提款","繳費","轉帳"].includes(cat);
+  // Show 來源帳戶 for 提款, 繳費, 轉帳, 或付款方式為銀行轉帳
+  const pay = document.getElementById("exp-pay").value;
+  const showSource = ["提款","繳費","轉帳"].includes(cat) || pay === "銀行轉帳";
   document.getElementById("source-account-wrap").classList.toggle("visible", showSource);
   // Show 目標帳戶 only for 轉帳 within expense
   document.getElementById("target-account-wrap").style.display = cat === "轉帳" ? "block" : "none";
@@ -541,7 +542,12 @@ function toggleCatFields() {
 function togglePayFields() {
   const pay = document.getElementById("exp-pay").value;
   const isCC = pay === "信用卡" || pay === "LINE Pay";
+  const isBank = pay === "銀行轉帳";
   document.getElementById("cc-fields").classList.toggle("visible", isCC);
+  // 銀行轉帳時顯示來源帳戶（與 toggleCatFields 同步）
+  const cat = document.getElementById("exp-cat").value;
+  const showSource = isBank || ["提款","繳費","轉帳"].includes(cat);
+  document.getElementById("source-account-wrap").classList.toggle("visible", showSource);
   if (pay === "LINE Pay") {
     document.getElementById("exp-bank").value = "富邦";
     document.getElementById("exp-source").value = "";
