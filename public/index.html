@@ -13,16 +13,17 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#ffffff;--bg2:#f5f5f4;--bg3:#ece9e3;
-  --text:#1a1a1a;--text2:#6b6b6b;--text3:#a0a0a0;
-  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
-  --success:#0f6e56;--danger:#a32d2d;--warn:#854f0b;
+  --bg:#f5f9fb;--bg2:#eaf2f7;--bg3:#ddeaf0;
+  --text:#1d3a4a;--text2:#5a7f94;--text3:#8eb0c0;
+  --border:rgba(91,154,181,0.18);--border2:rgba(91,154,181,0.32);
+  --success:#1a7a5e;--danger:#b33a3a;--warn:#8a5a0a;
   --radius:10px;--radius-lg:14px;
+  --accent:#3d8fa8;
 }
 @media(prefers-color-scheme:dark){
   :root{
-    --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
-    --text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+    --bg:#0d1e26;--bg2:#152833;--bg3:#1c3340;
+    --text:#d4eaf4;--text2:#7aabbf;--text3:#4a7a8c;
     --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22);
     --success:#5dcaa5;--danger:#f09595;--warn:#fac775;
   }
@@ -118,7 +119,7 @@ input:focus,select:focus{outline:none;border-color:var(--text)}
 <body>
 
 <div class="topbar">
-  <div class="topbar-title">財務小幫手</div>
+  <div class="topbar-title">古靈閣</div>
   <div class="tabs">
     <button class="tab active" onclick="switchTab('accounts')">帳戶總覽</button>
     <button class="tab" onclick="switchTab('budget')">預算</button>
@@ -145,7 +146,7 @@ input:focus,select:focus{outline:none;border-color:var(--text)}
         <div class="account-grid" id="other-accounts"></div>
       </div>
       <div class="card">
-        <div class="section-title">信用卡本月已刷（預計下月帳單）</div>
+        <div class="section-title">信用卡待繳帳單</div>
         <div id="cc-accounts"></div>
         <div class="total-row" style="margin-top:8px"><span>信用卡負債</span><span id="cc-total" style="color:var(--danger)">—</span></div>
       </div>
@@ -589,7 +590,8 @@ async function loadAccountsData() {
       const bank = e.properties["信用卡"]?.select?.name || "";
       const amt = e.properties["金額"]?.number || 0;
       const billMonth = e.properties["帳單月份"]?.select?.name || "";
-      if ((pay === "信用卡" || pay === "LINE Pay") && bank && billMonth === nextMonth) {
+      // 顯示所有尚未繳清的帳單（帳單月份 >= 本月）
+      if ((pay === "信用卡" || pay === "LINE Pay" || pay === "LINE PAY") && bank && billMonth >= thisMonth) {
         ccSpend[bank] = (ccSpend[bank] || 0) + amt;
       }
     }
@@ -750,7 +752,12 @@ async function addRecord() {
         props["信用卡"] = { select: { name: bank } };
         props["帳單月份"] = { select: { name: billMonth } };
       }
-      sourceAcc = source;
+      // LINE Pay 付款時，來源帳戶為 LINE Money
+      if (pay === "LINE Pay" || pay === "LINE PAY") {
+        sourceAcc = "LINE Money";
+      } else {
+        sourceAcc = source;
+      }
     } else if (type === "收入") {
       const src = document.getElementById("inc-source").value;
       const target = document.getElementById("inc-target").value;
