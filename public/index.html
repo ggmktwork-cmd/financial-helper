@@ -592,10 +592,8 @@ async function loadAccountsData() {
       const bank = e.properties["信用卡"]?.select?.name || "";
       const amt = e.properties["金額"]?.number || 0;
       const billMonth = e.properties["帳單月份"]?.select?.name || "";
-      // 顯示所有尚未繳清的帳單（帳單月份 >= 本月）
-      if ((pay === "信用卡" || pay === "LINE Pay" || pay === "LINE PAY") && bank && billMonth >= thisMonth) {
-        ccSpend[bank] = (ccSpend[bank] || 0) + amt;
-      }
+      // 不再從支出記錄計算信用卡待繳，改由帳戶餘額資料庫直接讀取
+      void(0);
     }
 
     for (const a of accounts) {
@@ -608,9 +606,9 @@ async function loadAccountsData() {
       } else if (type === "電子支付" || type === "現金") {
         otherHTML += `<div class="account-item"><div class="account-name">${name}</div><div class="account-balance ${balance < 0 ? 'negative' : ''}">${fmtMoney(balance)}</div></div>`;
       } else if (type === "信用卡") {
-        const spent = ccSpend[name.replace("卡", "")] || 0;
-        ccTotal += spent;
-        ccHTML += `<div class="summary-row"><span>${name}</span><span style="font-weight:600;color:${spent > 0 ? 'var(--danger)' : 'var(--text3)'}">${spent > 0 ? '-' : ''}${fmtMoney(spent)}</span></div>`;
+        const debt = Math.abs(balance);
+        ccTotal += debt;
+        ccHTML += `<div class="summary-row"><span>${name}</span><span style="font-weight:600;color:${debt > 0 ? 'var(--danger)' : 'var(--text3)'}">${debt > 0 ? '-' : ''}${fmtMoney(debt)}</span></div>`;
       }
     }
 
@@ -931,23 +929,30 @@ async function loadCreditData() {
   document.getElementById("credit-loading").style.display = "block";
   document.getElementById("credit-content").innerHTML = "";
   try {
-    const allCredit = await notionQueryAll(dbIds.credit);
-    const rows = (allCredit.results || []).filter(r => r.properties["帳單月份"]?.select?.name === month);
+    // 從每日支出資料庫讀取帳單月份符合的信用卡記錄
+    const allExp = await notionQueryAll(dbIds.expenses);
+    const rows = (allExp.results || []).filter(r => {
+      const bm = r.properties["帳單月份"]?.select?.name || "";
+      const pay = r.properties["付款方式"]?.select?.name || "";
+      const bank = r.properties["信用卡"]?.select?.name || "";
+      return bm === month && bank && (pay === "信用卡" || pay === "LINE Pay" || pay === "LINE PAY" || pay === "銀行轉帳");
+    });
     if (rows.length === 0) {
       document.getElementById("credit-content").innerHTML = `<div class="empty-state">本月尚無信用卡帳單紀錄</div>`;
     } else {
+      // 按信用卡分組合計
+      const bankTotals = {};
+      for (const r of rows) {
+        const bank = r.properties["信用卡"]?.select?.name || "";
+        const amt = r.properties["金額"]?.number || 0;
+        bankTotals[bank] = (bankTotals[bank] || 0) + amt;
+      }
       let totalCC = 0;
-      const html = rows.map(r => {
-        const bank = getTitle(r.properties, "銀行名稱");
-        const amt = r.properties["應繳金額"]?.number || 0;
-        const paid = r.properties["已繳"]?.checkbox || false;
-        if (!paid) totalCC += amt;
+      const html = Object.entries(bankTotals).map(([bank, amt]) => {
+        totalCC += amt;
         return `<div class="credit-row">
-          <div><div class="credit-bank">${bank}</div><div class="credit-meta">${month} 帳單${paid ? ' · <span style="color:var(--success)">已繳清</span>' : ''}</div></div>
-          <div style="display:flex;align-items:center;gap:12px">
-            <div style="font-size:15px;font-weight:600;${paid ? 'text-decoration:line-through;color:var(--text3)' : ''}">${fmtMoney(amt)}</div>
-            <input type="checkbox" class="paid-check" ${paid ? "checked" : ""} onchange="togglePaid('${r.id}',this.checked)">
-          </div>
+          <div><div class="credit-bank">${bank}卡</div><div class="credit-meta">${month} 帳單</div></div>
+          <div style="font-size:15px;font-weight:600;color:var(--danger)">${fmtMoney(amt)}</div>
         </div>`;
       }).join("");
       document.getElementById("credit-content").innerHTML = html + `<div class="summary-row total"><span>待繳合計</span><span style="color:var(--danger)">${fmtMoney(totalCC)}</span></div>`;
