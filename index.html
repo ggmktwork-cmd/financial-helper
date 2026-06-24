@@ -592,11 +592,8 @@ async function loadAccountsData() {
       const bank = e.properties["信用卡"]?.select?.name || "";
       const amt = e.properties["金額"]?.number || 0;
       const billMonth = e.properties["帳單月份"]?.select?.name || "";
-      // 顯示當月及下月待繳帳單（排除已過去的月份）
-      const isCurrentOrFuture = billMonth === thisMonth || billMonth === nextMonth;
-      if ((pay === "信用卡" || pay === "LINE Pay" || pay === "LINE PAY" || pay === "銀行轉帳") && bank && isCurrentOrFuture) {
-        ccSpend[bank] = (ccSpend[bank] || 0) + amt;
-      }
+      // 不再從支出記錄計算信用卡待繳，改由帳戶餘額資料庫直接讀取
+      void(0);
     }
 
     for (const a of accounts) {
@@ -609,9 +606,9 @@ async function loadAccountsData() {
       } else if (type === "電子支付" || type === "現金") {
         otherHTML += `<div class="account-item"><div class="account-name">${name}</div><div class="account-balance ${balance < 0 ? 'negative' : ''}">${fmtMoney(balance)}</div></div>`;
       } else if (type === "信用卡") {
-        const spent = ccSpend[name.replace("卡", "")] || 0;
-        ccTotal += spent;
-        ccHTML += `<div class="summary-row"><span>${name}</span><span style="font-weight:600;color:${spent > 0 ? 'var(--danger)' : 'var(--text3)'}">${spent > 0 ? '-' : ''}${fmtMoney(spent)}</span></div>`;
+        const debt = Math.abs(balance);
+        ccTotal += debt;
+        ccHTML += `<div class="summary-row"><span>${name}</span><span style="font-weight:600;color:${debt > 0 ? 'var(--danger)' : 'var(--text3)'}">${debt > 0 ? '-' : ''}${fmtMoney(debt)}</span></div>`;
       }
     }
 
